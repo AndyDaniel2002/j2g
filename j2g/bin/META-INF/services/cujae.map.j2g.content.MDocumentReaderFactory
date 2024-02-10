@@ -1,0 +1,3 @@
+cujae.map.j2g.content.impl.J2FReaderFactory
+cujae.map.j2g.content.impl.TkReaderFactory
+cujae.map.j2g.content.impl.PlainReaderFactory

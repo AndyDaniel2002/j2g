@@ -1,0 +1,242 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */
+options
+{
+  UNICODE_INPUT=true;
+  STATIC=false;  
+}
+
+PARSER_BEGIN(TkSolver)
+
+package cujae.map.j2g.parser.impl;
+
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import cujae.map.j2g.parser.ThokenCollector;
+
+public class TkSolver
+{
+
+  static final Set<String> nonInvertible = new HashSet<String>(
+    Arrays.asList(new String []{      "abs", "bessel", "ceiling", "divide", "floor", "integer",
+      "modulus", "round", "signum", "step"
+    }
+  ));
+
+  static boolean isNonInvertible(String fname) {
+    return (fname != null) ? nonInvertible.contains(fname.toLowerCase()) : false;
+  }
+
+}
+
+PARSER_END(TkSolver)
+
+TOKEN_MGR_DECLS:
+{
+  int parentCount;
+}
+
+SKIP :
+{
+  " "
+| "\t"
+| "\r"
+| "\n"
+}
+
+TOKEN [IGNORE_CASE] : /* RESERVED */
+{
+  < CALL : "call" >
+| < IF   : "if" >
+| < THEN : "then" >
+| < ELSE : "else" >
+| < INCLUDE : "include" >
+| < DECLARE : "declare" >
+}
+
+TOKEN : /* OPERATORS */
+{
+  < PLUS : "+" >
+| < MINUS : "-" >
+| < MULTIPLY : "*" >
+| < DIVIDE : "/" >
+| < POW : "^" >
+| < LOWER_THAN : "<" >
+| < GREATER_THAN : ">" >
+| < EQUAL : "=" >
+| < LOWER_THAN_EQUAL : "<=" | "=>" >
+| < GREATER_THAN_EQUAL : ">=" | "=>" >
+| < NOT_EQUAL : "<>" | "><" >
+| < ASSIGN : ":=" >
+}
+
+TOKEN : /* SEPARATOR */
+{
+  < LPARENT : "(" > { parentCount ++; }
+| < RPARENT : ")" > { parentCount --; }
+| < LSQUARE : "[" >
+| < RSQUARE : "]" >
+| < SEMICOLON : ";" > { if(parentCount == 0) SwitchTo(EndComment0); }
+| < COMMA : "," >
+}
+
+TOKEN : /* LITERALS */
+{
+  < #LETTER : [
+  "a"-"z","A"-"Z",
+  "$","@","#","$","%","_","`","~",
+  "α","β","γ","δ","ε","ζ","η","θ","ι","κ","λ","μ","ν","ξ","ο","π","ρ",
+  "σ","τ","υ","φ","χ","ψ","ω","Γ","Δ","Θ","Λ","Ξ","Π","Σ","Φ","Ψ","Ω"
+   ] >
+| < #DIGIT : [ "0"-"9" ] >
+| < #EXPONENT: [ "e","E" ]([ "+","-" ])?(< DIGIT >)+ >
+| < #LETTER_DIGIT : < LETTER >|< DIGIT > >
+| < NAME : < LETTER >(< LETTER_DIGIT >)* >
+| < SYMBOLIC : "'"< NAME > >
+| < NUMERIC: 
+    (< DIGIT >)*"."(< DIGIT >)+(< EXPONENT >)?
+  | (<DIGIT>)+(<EXPONENT>)? >
+| < LITERAL: 
+    "\""((~["\"","\\","\n","\r"])
+    | ("\\"["\\","\""]))*"\"" >
+}
+
+< EndComment0 > TOKEN : /* ANY CHARACTER */
+{
+  < E_COMMENT : (~[])+ >
+}
+
+void input(ThokenCollector c) :
+{
+}
+{
+  [oneLine(c)] [< SEMICOLON >] [comment(c)] < EOF >
+}
+
+void oneLine(ThokenCollector c) :
+{}
+{
+  ifStatement(c)
+| callStatement(c)| statement(c, 0)
+}
+
+void statement(ThokenCollector c, int signum) :
+{}
+{
+  unary(c, signum)
+  (
+    (
+      < PLUS >
+    | < MINUS >
+    | < MULTIPLY >
+    | < DIVIDE >
+    | < POW >
+    | < LOWER_THAN >
+    | < GREATER_THAN >
+    | < EQUAL >
+    | < LOWER_THAN_EQUAL >
+    | < GREATER_THAN_EQUAL >
+    | < NOT_EQUAL >
+    | < ASSIGN >
+    )
+    unary(c, signum)
+  )*
+}
+
+void unary(ThokenCollector c, int signum) :
+{}
+{
+  < MINUS > element(c, signum)
+| element(c, signum)
+}
+
+void element(ThokenCollector c, int signum) :
+{
+  Token t;
+  boolean isFunction = false;
+}
+{
+  < NUMERIC >
+| < LITERAL >
+| (
+    t = < NAME >
+    (    
+      (
+        ( 
+          < LPARENT >
+          {
+            if(isNonInvertible(t.image)) signum = -1;
+          }
+          (parameterList(c, signum))?
+          {
+            isFunction = true;
+          }
+          < RPARENT >
+        )
+        | 
+        ( 
+          < LSQUARE > (statement(c, signum))? < RSQUARE >
+        ) 
+      )?
+      {
+        if(!isFunction)        {
+          c.add(t.kind, t.beginLine, t.endLine, t.beginColumn, t.endColumn, t.image, !isFunction, signum, 0);        }
+      } 
+    ) 
+  | t = < SYMBOLIC >
+    (
+      LOOKAHEAD(2) < LSQUARE > (statement(c, signum))? < RSQUARE >
+    )?
+    {
+      c.add(t.kind, t.beginLine, t.endLine, t.beginColumn, t.endColumn, t.image, !isFunction, signum, 0);      
+    }
+  )
+| < LPARENT > statement(c, signum) < RPARENT >
+}
+
+void parameterList(ThokenCollector c, int signum) :
+{}
+{
+  statement(c, signum) (< COMMA > statement(c, signum))*
+}
+
+void ifStatement(ThokenCollector c) :
+{}
+{
+  < IF > statement(c, -1) < THEN > 
+  ( 
+    statement(c, 0) | callStatement(c)
+  )
+  (
+    < ELSE > 
+    (
+      statement(c, 0) | callStatement(c)
+    )
+  )?
+}
+
+void callStatement(ThokenCollector c) :
+{}
+{
+  < CALL > < NAME > < LPARENT > (parameterList(c, -1))? [< SEMICOLON > (parameterList(c, 1))?] < RPARENT >
+}
+
+void comment(ThokenCollector c) :
+{
+  Token t;
+}
+{
+  t = < E_COMMENT >
+  {
+    c.add(t.kind, t.beginLine, t.beginColumn, t.endLine, t.endColumn, t.image, false, 0, 0);
+	c.setName(ThokenCollector.getEndCommentName(t.image, c.getRegex()));      
+  }
+}
+
+
