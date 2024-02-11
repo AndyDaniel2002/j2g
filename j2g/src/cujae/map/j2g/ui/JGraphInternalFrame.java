@@ -249,15 +249,15 @@ public class JGraphInternalFrame extends JInternalFrame {
 		});
 		graphComponent.getGraphControl().addMouseWheelListener(new MouseWheelListener() {
 			
+			// hace que se aumento o disminuya el zoom  ...Andy
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				if(e.isControlDown()){
 					if(e.getWheelRotation() <= -1){
 						doZoomIn();
 					} else {
 						doZoomOut();
 					}
-				}
+				
 			}
 		});
 		
