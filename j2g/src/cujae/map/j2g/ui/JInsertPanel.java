@@ -155,6 +155,10 @@ public class JInsertPanel extends JPanel {
 		return descriptionTextField.getText();
 	}
 	
+	public String getRange() {
+		return rangeTextField.getText();
+	}
+	
 	public boolean isVariable(){
 		return variableToggleButton.isSelected() || 
 				!relationToggleButton.isSelected();
