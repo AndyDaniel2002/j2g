@@ -1,6 +1,8 @@
 package cujae.map.j2g.ui;
 
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -15,6 +17,8 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import java.awt.Color;
+import java.awt.Graphics;
 
 public class JInsertPanel extends JPanel {
 
@@ -64,14 +68,28 @@ public class JInsertPanel extends JPanel {
 			
 		}
 	};
-	
+	private final JTextField rangeTextField = new JTextField();
+
 	public JInsertPanel(Object[] variables, Object[] relations) {
 		super();
+		rangeTextField.setBorder(new TitledBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, new Color(255, 255, 255), new Color(160, 160, 160)), "Rango", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)), "Rango", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		variablesModel = new DefaultComboBoxModel(variables);
 		relationsModel = new DefaultComboBoxModel(relations);
 		
 		variableToggleButton.addItemListener(listener);
-		relationToggleButton.addItemListener(listener);
+//Mostrar u ocultar el rangeTextField
+		relationToggleButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				rangeTextField.setVisible(false);
+			}
+		});
+		variableToggleButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				rangeTextField.setVisible(true);
+			}
+		});
 		beginingRadioButton.addItemListener(listener);
 		beforeRadioButton.addItemListener(listener);
 		afterRadioButton.addItemListener(listener);
@@ -109,8 +127,10 @@ public class JInsertPanel extends JPanel {
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		add(selectPanel);
 		add(dataPanel);
+		
+		dataPanel.add(rangeTextField);
 		add(optionsPanel);
-	}	
+	}
 	
 	public int getIndex(){
 		
